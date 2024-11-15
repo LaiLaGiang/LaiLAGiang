@@ -1,3 +1,31 @@
+# Đường dẫn tới thư mục WMI LogFiles
+$WmiLogPath = "C:\Windows\System32\LogFiles\WMI"
+
+# Kiểm tra xem thư mục có tồn tại không
+if (Test-Path -Path $WmiLogPath) {
+    # Xóa tất cả các tệp và thư mục con
+    Remove-Item -Path "$WmiLogPath\*" -Force -Recurse
+    Write-Output "Đã xóa tất cả các tệp trong thư mục WMI LogFiles"
+} else {
+    Write-Output "Không tìm thấy thư mục WMI LogFiles tại đường dẫn $WmiLogPath"
+}
+# Đường dẫn tới thư mục WlanReport
+$WlanReportPath = "C:\ProgramData\Microsoft\Windows\WlanReport"
+
+# Kiểm tra xem thư mục có tồn tại không
+if (Test-Path -Path $WlanReportPath) {
+    # Lấy thông tin quyền hiện tại
+    $acl = Get-Acl -Path $WlanReportPath
+    # Tạo quyền "Deny" cho "Everyone"
+    $denyEveryone = New-Object System.Security.AccessControl.FileSystemAccessRule("Everyone", "FullControl", "Deny")
+    # Thêm quyền "Deny" vào ACL
+    $acl.SetAccessRule($denyEveryone)
+    # Áp dụng quyền mới cho thư mục
+    Set-Acl -Path $WlanReportPath -AclObject $acl
+    Write-Output "Đã thiết lập quyền 'Deny' cho 'Everyone' trên thư mục WlanReport"
+} else {
+    Write-Output "Không tìm thấy thư mục WlanReport tại đường dẫn $WlanReportPath"
+}
 # Check wireless LAN interface status first
 try {
     netsh wlan show interface
